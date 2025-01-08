@@ -7,6 +7,7 @@ const {
   returnEmprunt,
 } = require("../controllers/emprunts.controller");
 
+// Routes
 router.get("/", emprunts);
 router.post("/", emprunt);
 router.post("/return/:id", returnEmprunt);

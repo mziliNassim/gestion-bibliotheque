@@ -16,21 +16,21 @@ const register = async (req, res) => {
     const db = await dbConnection();
 
     // Username exists ??
-    const usernameExist = await db.collection("Users").findOne({ username });
+    const usernameExist = await db.collection("Clients").findOne({ username });
     if (usernameExist)
       return res
         .status(401)
         .json({ message: "Invalid Username !", data: null });
 
     // Email exists ??
-    const user = await db.collection("Users").findOne({ email });
+    const user = await db.collection("Clients").findOne({ email });
     if (user)
       return res.status(401).json({ message: "Invalid Email !", data: null });
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await db
-      .collection("Users")
+      .collection("Clients")
       .insertOne({ username, email, password: hashedPassword });
 
     // Create token
@@ -65,7 +65,7 @@ const login = async (req, res) => {
     const db = await dbConnection();
 
     // Find user
-    const user = await db.collection("Users").findOne({ email });
+    const user = await db.collection("Clients").findOne({ email });
     if (!user)
       return res
         .status(401)
@@ -100,9 +100,7 @@ const logout = async (req, res) => {
   try {
     // Invalidate the token
     const token = req.headers.authorization?.split(" ")[1];
-    if (token) {
-      invalidateToken(token); // Implement token invalidation logic here
-    }
+    // if (token) invalidateToken(token);
 
     return res.status(200).json({
       message: "Logout successful",

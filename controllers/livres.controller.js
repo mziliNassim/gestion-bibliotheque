@@ -1,5 +1,6 @@
-const dbConnection = require("../config/db");
 const { ObjectId } = require("mongodb");
+
+const dbConnection = require("../config/db");
 
 // Get Livres - controller
 const getLivres = async (req, res) => {
@@ -43,9 +44,12 @@ const getLivresById = async (req, res) => {
 // Post Livre - controller
 const addLivre = async (req, res) => {
   try {
+    // {isbn, titre, auteur, categorie, annee_publication, editeur, langue, etat, tags, description}
     const newLivre = req.body;
     const db = await dbConnection();
-    const result = await db.collection("Livres").insertOne(newLivre);
+    const result = await db
+      .collection("Livres")
+      .insertOne({ ...newLivre, disponible: true });
     return res.status(200).json({
       message: "Livre added successfuly!",
       data: { _id: result.insertedId, ...newLivre },
@@ -63,11 +67,11 @@ const addLivre = async (req, res) => {
 const updateLivre = async (req, res) => {
   try {
     const id = req.params.id;
-    const updatedLivre = req.body;
+    const updatedData = req.body;
     const db = await dbConnection();
     const result = await db
       .collection("Livres")
-      .updateOne({ _id: new ObjectId(id) }, { $set: updatedLivre });
+      .updateOne({ _id: new ObjectId(id) }, { $set: updatedData });
 
     if (result.matchedCount === 0) {
       return res.status(404).json({
@@ -76,16 +80,13 @@ const updateLivre = async (req, res) => {
       });
     }
 
-    if (result.modifiedCount === 0) {
-      return res.status(200).json({
-        message: "No changes made to the Livre.",
-        data: updatedLivre,
-      });
-    }
+    let message;
+    if (result.modifiedCount === 0) message = "No changes made to the Livre.";
+    else message = "Livre updated successfully!";
 
     return res.status(200).json({
-      message: "Livre updated successfully!",
-      data: { _id: id, ...updatedLivre },
+      message,
+      data: await db.collection("Livres").findOne({ _id: new ObjectId(id) }),
     });
   } catch (error) {
     console.log("updateLivre ~ error:", error.message);

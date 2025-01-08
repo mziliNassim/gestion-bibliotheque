@@ -11,12 +11,12 @@ dotenv.config();
 // "!don" : routes
 app.use("/auth", require("./routes/auth.route"));
 app.use("/livres", require("./routes/livres.route"));
-
-// "!Handling" : routes
 app.use("/emprunts", require("./routes/emprunts.route"));
 
+// "!Handling" : routes
+app.use("/clients", require("./routes/clients.route.js"));
+
 // "!To do" : routes
-app.use("/clients", require("./routes/clients.route"));
 app.use("/notifications", require("./routes/notifications.route"));
 app.use("/payiement", require("./routes/payiement.route"));
 

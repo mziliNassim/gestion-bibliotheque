@@ -9,12 +9,10 @@ const {
   deleteLivre,
 } = require("../controllers/livres.controller");
 
-// Routes !don
+// Routes
 router.get("/", getLivres);
 router.get("/:id", getLivresById);
 router.post("/", addLivre);
-
-// Routes !To do
 router.put("/:id", updateLivre);
 router.delete("/:id", deleteLivre);
 
