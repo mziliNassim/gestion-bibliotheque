@@ -7,13 +7,12 @@ const dbConnection = async () => {
     if (!db) {
       const mongoClient = new MongoClient(process.env.MONGODB_URI);
       const client = await mongoClient.connect();
-      db = client.db("OFPPT"); // Assign to the cached variable
+      db = client.db(process.env.DB_NAME);
       console.log("Connected to MongoDB successfully");
     }
-    return db; // Return the cached database instance
+    return db;
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
-    throw error; // Ensure errors are propagated
   }
 };
 
