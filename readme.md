@@ -10,6 +10,7 @@
 - [Services](#services)
   - [1 - Service de Gestion des Livres](#1---service-de-gestion-des-livres)
   - [2 - Service de Gestion des Emprunts](#2---service-de-gestion-des-emprunts)
+  - [3 - Service de Gestion des Clients](#3---service-de-gestion-des-clients)
 
 ## Envirement Variables
 
@@ -164,41 +165,44 @@ JWT_EXPIRES_IN = "1d"
 
 - **Responsabilité** :
 
-- Gérer les informations sur les livres disponibles dans la librairie.
+  - Gérer les informations sur les livres disponibles dans la librairie.
 
 - **Fonctionnalités** :
 
-- Afficher, Ajouter, modifier et supprimer des livres.
-- Consulter la disponibilité des livres.
-- Mettre à jour l’état d’un livre (disponible, emprunté, réservé).
+  - Afficher, Ajouter, modifier et supprimer des livres.
+  - Consulter la disponibilité des livres.
+  - Mettre à jour l’état d’un livre (disponible, emprunté, réservé).
 
 - **Canal de communication** :
 
-- API REST pour les interactions avec d’autres services.
+  - API REST pour les interactions avec d’autres services.
 
 - **Base de données** :
 
-- Une base de données pour les informations sur les livres (isbn, titre, auteur, categorie, annee_publication, editeur, langue, description, tags, disponible).
+  - Une base de données pour les informations sur les livres (isbn, titre, auteur, categorie, annee_publication, editeur, langue, description, tags, disponible).
 
 ### 2 - **Service de Gestion des Emprunts**
 
 - **Responsabilité** :
 
-- Gérer les emprunts effectués par les clients.
+  - Gérer les emprunts effectués par les clients.
 
 - **Fonctionnalités** :
 
-- Créer, mettre à jour la disponibilité et la retourne des emprunts.
+  - Créer, mettre à jour la disponibilité et la retourne des emprunts.
 
-- **Canal de communication** :
+  - **Canal de communication** :
 
 - API REST.
-- Messages asynchrones pour notifier d’autres services (service de notification).
+
+  - Messages asynchrones pour notifier d’autres services (service de notification).
 
 - **Base de données** :
 
-- Une base de données pour les enregistrements des emprunts (clientId, livreId, startDate, returnDate, status).
+  - Une base de données pour les enregistrements des emprunts (clientId, livreId, startDate, returnDate, status).
 
-```
+### 3 - **Service de Gestion des Clients**
 
-```
+- **Responsabilité** :
+
+  -
