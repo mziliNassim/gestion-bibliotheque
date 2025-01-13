@@ -25,7 +25,7 @@ const register = async (req, res) => {
     // Email exists ??
     const user = await db.collection("Clients").findOne({ email });
     if (user)
-      return res.status(401).json({ message: "Invalid Email !", data: null });
+      return res.status(400).json({ message: "Invalid Email !", data: null });
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
