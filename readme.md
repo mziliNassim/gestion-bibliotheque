@@ -1,6 +1,17 @@
 # Gestion des Emprunts d'une Librairie
 
-## Envirement
+## Navigation
+
+- [Envirement Variables](#envirement-variables)
+- [Authentification](#authentification)
+  - [1 - Register a User](#1---register-a-user)
+  - [2 - Login User](#2---login-user)
+  - [3 - Logout User](#3---logout-user)
+- [Services](#services)
+  - [1 - Service de Gestion des Livres](#1---service-de-gestion-des-livres)
+  - [2 - Service de Gestion des Emprunts](#2---service-de-gestion-des-emprunts)
+
+## Envirement Variables
 
 ```.env
 PORT = 5000
@@ -47,15 +58,15 @@ JWT_EXPIRES_IN = "1d"
     ```json
     {
       "message": "User registered successfully.",
-      "data": User_information,
-      token: jwt_token
+      "data": "USER_INFOS",
+      "token": "JWT_TOKEN"
     }
     ```
 
   - **400 Bad Request:**
 
     ```json
-    {"message": handling_message_while_proccess, "data": null}
+    { "message": "MESSAGE_WHILE_PROCESS", "data": null }
     ```
 
   - **500 Internal Server Error:**
@@ -88,15 +99,15 @@ JWT_EXPIRES_IN = "1d"
     ```json
     {
       "message": "Login successful.",
-      "data": User_information,
-      token: jwt_token
+      "data": "USER_INFOS",
+      "token": "JWT_TOKEN"
     }
     ```
 
   - **400 Bad Request:**
 
     ```json
-    {"message": handling_message_while_proccess, "data": null}
+    { "message": "MESSAGE_WHILE_PROCESS", "data": null }
     ```
 
   - **500 Internal Server Error:**
@@ -141,7 +152,7 @@ JWT_EXPIRES_IN = "1d"
 
 ## Services
 
-### 1. **Service de Gestion des Livres**
+### 1 - **Service de Gestion des Livres**
 
 - **Responsabilité** :
 
@@ -161,7 +172,7 @@ JWT_EXPIRES_IN = "1d"
 
   - Une base de données pour les informations sur les livres (isbn, titre, auteur, categorie, annee_publication, editeur, langue, description, tags, disponible).
 
-### 2. **Service de Gestion des Emprunts**
+### 2 - **Service de Gestion des Emprunts**
 
 - **Responsabilité** :
 
