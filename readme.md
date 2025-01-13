@@ -1,5 +1,21 @@
 # Gestion des Emprunts d'une Librairie
 
+## Envirement
+
+```.env
+PORT = 5000
+
+# DB Configuration
+
+MONGODB_URI = mongodb://localhost:27017/ # ou votre URI MongoDB
+DB_NAME = gestion-bibliotheque
+
+# JWT Configuration
+
+JWT_SECRET = "your_jwt_secret_key"
+JWT_EXPIRES_IN = "1d"
+```
+
 ## Services
 
 ### 1. **Service de Gestion des Livres**
