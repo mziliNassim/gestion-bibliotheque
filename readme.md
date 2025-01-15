@@ -205,4 +205,19 @@ JWT_EXPIRES_IN = "1d"
 
 - **Responsabilité** :
 
-  -
+  - Gérer les informations et les profils des clients.
+
+- **Fonctionnalités** :
+
+  - Ajouter, modifier et supprimer des clients.
+  - Suivre les emprunts en cours et les historiques des clients.
+
+- **Canal de communication** :
+
+  - API REST pour fournir les informations sur les clients aux autres services.
+
+- **Base de données** :
+
+  - Une base de données pour les profils des clients (username, email, password (Hash Password), historique des emprunts).
+
+### 4 -
