@@ -1,9 +1,16 @@
+const express = require("express");
+const dotenv = require("dotenv");
 const { ObjectId } = require("mongodb");
 
-const dbConnection = require("../config/db");
+const dbConnection = require("../../config/db");
 
-// Get Livres - controller
-const getLivres = async (req, res) => {
+const app = express();
+
+app.use(express.json());
+dotenv.config();
+
+// Routes
+app.get("/livres", async (req, res) => {
   try {
     const db = await dbConnection();
     const result = await db.collection("Livres").find().toArray();
@@ -14,13 +21,13 @@ const getLivres = async (req, res) => {
       .status(500)
       .json({ message: "Impossible de récupérer les livres", data: null });
   }
-};
+});
 
-// Get Livre By Id -  controller
-const getLivresById = async (req, res) => {
+app.get("/livres/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const db = await dbConnection();
+
     const result = await db
       .collection("Livres")
       .findOne({ _id: new ObjectId(id) });
@@ -39,10 +46,9 @@ const getLivresById = async (req, res) => {
       .status(500)
       .json({ message: "Impossible de récupérer le liver", data: null });
   }
-};
+});
 
-// Post Livre - controller
-const addLivre = async (req, res) => {
+app.post("/livres", async (req, res) => {
   try {
     // {isbn, titre, auteur, categorie, annee_publication, editeur, langue, etat, tags, description}
     const newLivre = req.body;
@@ -61,10 +67,9 @@ const addLivre = async (req, res) => {
       data: null,
     });
   }
-};
+});
 
-// Put Livre - controller
-const updateLivre = async (req, res) => {
+app.put("/livres/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const updatedData = req.body;
@@ -95,10 +100,9 @@ const updateLivre = async (req, res) => {
       data: null,
     });
   }
-};
+});
 
-// delete Livre - controller
-const deleteLivre = async (req, res) => {
+app.delete("/livres/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const db = await dbConnection();
@@ -124,12 +128,10 @@ const deleteLivre = async (req, res) => {
       data: null,
     });
   }
-};
+});
 
-module.exports = {
-  getLivres,
-  getLivresById,
-  addLivre,
-  updateLivre,
-  deleteLivre,
-};
+// Server Listening
+const port = process.env.LIVRES_PORT || 5002;
+app.listen(port, () => {
+  console.log(`server "Livres" on http://localhost:${port}/`);
+});

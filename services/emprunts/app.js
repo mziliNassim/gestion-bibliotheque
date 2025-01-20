@@ -1,9 +1,16 @@
+const express = require("express");
+const dotenv = require("dotenv");
 const { ObjectId } = require("mongodb");
 
-const dbConnection = require("../config/db");
+const dbConnection = require("../../config/db");
 
-// GET Emprints - controller
-const emprunts = async (req, res) => {
+const app = express();
+
+app.use(express.json());
+dotenv.config();
+
+// Routes
+app.get("/emprunts", async (req, res) => {
   try {
     const db = await dbConnection();
     const emprunts = await db.collection("Emprunts").find().toArray();
@@ -17,10 +24,9 @@ const emprunts = async (req, res) => {
     console.log("returnEmprunt ~ error:", error);
     return res.status(500).json({ message: "Invalid Operation.", data: null });
   }
-};
+});
 
-// POST Emprunt - controller
-const emprunt = async (req, res) => {
+app.post("/emprunts", async (req, res) => {
   try {
     const { livreId, clientId } = req.body;
 
@@ -74,10 +80,9 @@ const emprunt = async (req, res) => {
       .status(500)
       .json({ message: "Imposibel d'emprunter le livre.", data: null });
   }
-};
+});
 
-// POST Return Emprunt - controller
-const returnEmprunt = async (req, res) => {
+app.post("/emprunts/return/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const db = await dbConnection();
@@ -116,6 +121,10 @@ const returnEmprunt = async (req, res) => {
     console.log("returnEmprunt ~ error:", error);
     return res.status(500).json({ message: "Invalid Operation.", data: null });
   }
-};
+});
 
-module.exports = { emprunts, emprunt, returnEmprunt };
+// Server Listening
+const port = process.env.EMPRUNTS_PORT || 5004;
+app.listen(port, () => {
+  console.log(`server "Emprunts" on http://localhost:${port}/`);
+});

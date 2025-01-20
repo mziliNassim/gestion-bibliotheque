@@ -1,10 +1,17 @@
+const express = require("express");
+const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
 const { ObjectId } = require("mongodb");
 
-const dbConnetion = require("../config/db");
+const dbConnetion = require("../../config/db");
 
-// GET Clinets - controllers
-const getClinets = async (req, res) => {
+const app = express();
+
+app.use(express.json());
+dotenv.config();
+
+// Routes
+app.get("/clients", async (req, res) => {
   try {
     const db = await dbConnetion();
     const clinets = await db.collection("Clients").find().toArray();
@@ -18,10 +25,9 @@ const getClinets = async (req, res) => {
       .status(500)
       .json({ message: "Failled to get clients.", data: null });
   }
-};
+});
 
-// GET Client - controllers
-const getClinetById = async (req, res) => {
+app.get("/clients/:id", async (req, res) => {
   try {
     const id = req.params.id;
 
@@ -43,10 +49,9 @@ const getClinetById = async (req, res) => {
     console.log("getClinetById ~ error:", error.message);
     res.status(500).json({ message: "Failled to get client.", data: null });
   }
-};
+});
 
-// POST clients - controllers
-const addClinet = async (req, res) => {
+app.post("/clients", async (req, res) => {
   try {
     const { username, email, password } = req.body;
     console.log("addClinet ~ email:", email);
@@ -88,10 +93,9 @@ const addClinet = async (req, res) => {
     console.log("addClinet ~ error:", error.message);
     return res.status(500).json({ message: "Failled to add client." });
   }
-};
+});
 
-// PUT Clinet "id" - controllers
-const updateClinetById = async (req, res) => {
+app.put("/clients/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const { username, email, password } = req.body;
@@ -149,10 +153,9 @@ const updateClinetById = async (req, res) => {
     console.log("updateClinetById ~ error:", error.message);
     res.status(500).json({ message: "Failled to update client." });
   }
-};
+});
 
-// delete Clinet "id" - controllers
-const deleteClinet = async (req, res) => {
+app.delete("/clients/:id", async (req, res) => {
   try {
     const id = req.params.id;
 
@@ -172,12 +175,10 @@ const deleteClinet = async (req, res) => {
     console.log("getClinetById ~ error:", error.message);
     res.status(500).json({ message: "Failled to delete client.", data: null });
   }
-};
+});
 
-module.exports = {
-  getClinets,
-  getClinetById,
-  addClinet,
-  updateClinetById,
-  deleteClinet,
-};
+// Server Listening
+const port = process.env.CLINETS_PORT || 5000;
+app.listen(port, () => {
+  console.log(`server "Clinets" on http://localhost:${port}/`);
+});

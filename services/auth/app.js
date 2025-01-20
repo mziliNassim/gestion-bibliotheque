@@ -1,10 +1,17 @@
+const express = require("express");
+const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
 
-const dbConnection = require("../config/db");
-const generateToken = require("../core/generateToken");
+const dbConnection = require("../../config/db");
+const generateToken = require("./core/generateToken");
 
-// Registre controller
-const register = async (req, res) => {
+const app = express();
+
+app.use(express.json());
+dotenv.config();
+
+// Routes
+app.post("/auth/register", async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
@@ -48,10 +55,9 @@ const register = async (req, res) => {
       .status(500)
       .json({ message: "Internal server error", data: null });
   }
-};
+});
 
-// Login controller
-const login = async (req, res) => {
+app.post("/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -93,10 +99,9 @@ const login = async (req, res) => {
       .status(500)
       .json({ message: "Internal server error", data: null });
   }
-};
+});
 
-// Logout controller
-const logout = async (req, res) => {
+app.post("/auth/logout", async (req, res) => {
   try {
     // Invalidate the token
     const token = req.headers.authorization?.split(" ")[1];
@@ -112,6 +117,10 @@ const logout = async (req, res) => {
       .status(500)
       .json({ message: "Internal server error", data: null });
   }
-};
+});
 
-module.exports = { register, login, logout };
+// Server Listening
+const port = process.env.AUTH_PORT || 5001;
+app.listen(port, () => {
+  console.log(`server "Auth" on http://localhost:${port}/`);
+});
