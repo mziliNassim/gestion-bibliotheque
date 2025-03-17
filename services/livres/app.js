@@ -1,15 +1,14 @@
 const express = require("express");
-const dotenv = require("dotenv");
 const { ObjectId } = require("mongodb");
-
+require("dotenv").config();
 const dbConnection = require("../../config/db");
 
 const app = express();
-
 app.use(express.json());
-dotenv.config();
 
-// Routes
+// !Livre nown as : {_id, titre (require), quantite (require), auteur, categorie, isbn, editeur, ....}
+
+// GET All LIvres
 app.get("/livres", async (req, res) => {
   try {
     const db = await dbConnection();
@@ -23,6 +22,7 @@ app.get("/livres", async (req, res) => {
   }
 });
 
+// GET Livre by ID
 app.get("/livres/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -48,17 +48,23 @@ app.get("/livres/:id", async (req, res) => {
   }
 });
 
+// Create Livre
 app.post("/livres", async (req, res) => {
   try {
-    // {isbn, titre, auteur, categorie, annee_publication, editeur, langue, etat, tags, description}
-    const newLivre = req.body;
+    // {isbn, titre, auteur, categorie, annee_publication, editeur, langue, tags, description, quantite}
+    const { titre, quantite } = req.body;
+    if (!titre || !quantite) {
+      return res.status(400).json({
+        message: "Invalid inputs :  titre* && quantite*",
+        data: null,
+      });
+    }
+
     const db = await dbConnection();
-    const result = await db
-      .collection("Livres")
-      .insertOne({ ...newLivre, disponible: true });
-    return res.status(200).json({
+    const result = await db.collection("Livres").insertOne({ ...req.body });
+    return res.status(201).json({
       message: "Livre added successfuly!",
-      data: { _id: result.insertedId, ...newLivre },
+      data: { _id: result.insertedId, ...req.body },
     });
   } catch (err) {
     console.log("addLivre ~ err:", err.message);
@@ -69,21 +75,20 @@ app.post("/livres", async (req, res) => {
   }
 });
 
+// Update Livre
 app.put("/livres/:id", async (req, res) => {
   try {
-    const id = req.params.id;
-    const updatedData = req.body;
+    const { id } = req.params;
     const db = await dbConnection();
     const result = await db
       .collection("Livres")
-      .updateOne({ _id: new ObjectId(id) }, { $set: updatedData });
+      .updateOne({ _id: new ObjectId(id) }, { $set: req.body });
 
-    if (result.matchedCount === 0) {
+    if (result.matchedCount === 0)
       return res.status(404).json({
         message: "Livre not found.",
         data: null,
       });
-    }
 
     let message;
     if (result.modifiedCount === 0) message = "No changes made to the Livre.";
@@ -102,6 +107,7 @@ app.put("/livres/:id", async (req, res) => {
   }
 });
 
+// Delete Livre
 app.delete("/livres/:id", async (req, res) => {
   try {
     const id = req.params.id;

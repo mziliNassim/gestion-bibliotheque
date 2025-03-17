@@ -4,29 +4,34 @@ const bcrypt = require("bcrypt");
 const { ObjectId } = require("mongodb");
 
 const dbConnetion = require("../../config/db");
+const { default: axios } = require("axios");
 
 const app = express();
 
 app.use(express.json());
 dotenv.config();
 
-// Routes
+// !Client nown as : {_id, username, email, password}
+
+// GET All Clients
 app.get("/clients", async (req, res) => {
   try {
     const db = await dbConnetion();
-    const clinets = await db.collection("Clients").find().toArray();
+    const clients = await db.collection("Clients").find().toArray();
 
-    if (clinets.length === 0)
+    if (clients.length === 0)
       return res.status(200).json({ message: "No Client found", data: [] });
-    return res.status(200).json({ message: "All Clients", data: clinets });
+
+    return res.status(200).json({ message: "All Clients", data: clients });
   } catch (error) {
-    console.log("getClinets ~ error:", error.message);
+    console.log(" app.get ~ error:", error.message);
     return res
       .status(500)
       .json({ message: "Failled to get clients.", data: null });
   }
 });
 
+// GET Client by ID
 app.get("/clients/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -42,24 +47,26 @@ app.get("/clients/:id", async (req, res) => {
         .json({ message: "Client non trouvé.", data: null });
 
     res.status(200).json({
-      message: `Clinet with id : ${id}`,
+      message: `Client with id : ${id}`,
       data: { ...client, password: undefined },
     });
   } catch (error) {
-    console.log("getClinetById ~ error:", error.message);
+    console.log(" app.get ~ error:", error.message);
     res.status(500).json({ message: "Failled to get client.", data: null });
   }
 });
 
+// CREATE client + Send notification "welcome..." (service Notifcation)
 app.post("/clients", async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    console.log("addClinet ~ email:", email);
+
     // Validation
     if (!username || !email || !password)
-      return res
-        .status(400)
-        .json({ message: "Tous les champs sont requis.", data: null });
+      return res.status(400).json({
+        message: "Tous les champs sont requis : username, email, password",
+        data: null,
+      });
 
     const db = await dbConnetion();
 
@@ -81,6 +88,13 @@ app.post("/clients", async (req, res) => {
 
     // Inserstion to DB
     const result = await db.collection("Clients").insertOne(newClient);
+    console.log(" app.post ~ result:", result);
+
+    // send notification
+    await axios.post("http://localhost:5005/notifications/", {
+      clientID: result.insertedId,
+      message: `Welcome to Your Library!, Explore our vast collection of books`,
+    });
 
     return res.status(201).json({
       message: "Client ajouté avec succès.",
@@ -90,11 +104,14 @@ app.post("/clients", async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("addClinet ~ error:", error.message);
-    return res.status(500).json({ message: "Failled to add client." });
+    console.log(" app.post ~ error:", error.message);
+    return res
+      .status(500)
+      .json({ message: "Failled to add client.", error: error.message });
   }
 });
 
+// UPDATE client
 app.put("/clients/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -108,7 +125,7 @@ app.put("/clients/:id", async (req, res) => {
 
     const db = await dbConnetion();
 
-    // is username valid
+    // is username valid "length > 3"
     if (username && username.length > 3) {
       const usernameExist = await db
         .collection("Clients")
@@ -150,16 +167,25 @@ app.put("/clients/:id", async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("updateClinetById ~ error:", error.message);
-    res.status(500).json({ message: "Failled to update client." });
+    console.log(" app.put ~ error:", error.message);
+    return res.status(500).json({ message: "Failled to update client." });
   }
 });
 
+// DELELTE Client
 app.delete("/clients/:id", async (req, res) => {
   try {
     const id = req.params.id;
 
     const db = await dbConnetion();
+    // Ceck client exist
+    const client = await db
+      .collection("Clients")
+      .findOne({ _id: new ObjectId(id) });
+
+    if (!client)
+      return res.status(404).json({ message: "Invalid ID", data: null });
+
     const result = await db
       .collection("Clients")
       .deleteOne({ _id: new ObjectId(id) });
@@ -172,13 +198,13 @@ app.delete("/clients/:id", async (req, res) => {
       data: null,
     });
   } catch (error) {
-    console.log("getClinetById ~ error:", error.message);
+    console.log(" app.delete ~ error:", error);
     res.status(500).json({ message: "Failled to delete client.", data: null });
   }
 });
 
 // Server Listening
-const port = process.env.CLINETS_PORT || 5000;
+const port = process.env.CLINETS_PORT || 5003;
 app.listen(port, () => {
   console.log(`server "Clinets" on http://localhost:${port}/`);
 });

@@ -1,125 +1,174 @@
 const express = require("express");
-const dotenv = require("dotenv");
+const axios = require("axios");
 const { ObjectId } = require("mongodb");
-
+require("dotenv").config();
 const dbConnection = require("../../config/db");
 
 const app = express();
-
 app.use(express.json());
-dotenv.config();
 
-// Routes
+// !Emprunt nown as : {_id, livreID, clientID, startDate, returnDate, status : ("en cours" or "returned")}
+
+// get all emprunts
 app.get("/emprunts", async (req, res) => {
   try {
     const db = await dbConnection();
     const emprunts = await db.collection("Emprunts").find().toArray();
+
     if (emprunts.length === 0)
-      return res.status(200).json({ message: "No Emprunts found.", data: [] });
+      return res.status(404).json({ message: "No Emprunts found.", data: [] });
 
     return res
       .status(200)
       .json({ message: "Success, All Emprunts", data: emprunts });
   } catch (error) {
-    console.log("returnEmprunt ~ error:", error);
-    return res.status(500).json({ message: "Invalid Operation.", data: null });
+    console.log(" app.get ~ error:", error);
+    return res.status(500).json({ message: "Server Error", data: null });
   }
 });
 
-app.post("/emprunts", async (req, res) => {
+// Create Emprunt + Send notification (service Notifcation)
+app.post("/emprunts/:id", async (req, res) => {
+  const { id } = req.params;
   try {
-    const { livreId, clientId } = req.body;
+    // check livre disponible
+    try {
+      const livreResponse = await axios.get(
+        `http://localhost:5002/livres/${id}`
+      );
+      const quantite = livreResponse.data.data.quantite;
+      if (quantite == 0)
+        return res
+          .status(400)
+          .json({ message: "livre n'est pas disponible!", data: null });
 
-    // Data vlaidation
-    if (!livreId || !clientId)
+      // update "quantite - 1"
+      await axios.put(`http://localhost:5002/livres/${id}`, {
+        quantite: quantite - 1,
+      });
+    } catch (error) {
+      console.log(" app.post ~ error:", error);
       return res
-        .status(400)
-        .json({ message: "Tous les champs sont requis.", data: null });
+        .status(error.status)
+        .json({ message: error.response.data.message });
+    }
 
-    // is livre disponible
+    // Création de la commande
+    const { clientID } = req.body;
+    if (!clientID)
+      return res.status(400).json({
+        message: "Champs clientID est obligatoires.",
+      });
+
     const db = await dbConnection();
-    const livre = await db
-      .collection("Livres")
-      .findOne({ _id: new ObjectId(livreId) });
-
-    if (!livre)
-      return res.status(404).json({ message: "Livre non trouvé.", data: null });
-
-    if (!livre.disponible)
-      return res
-        .status(400)
-        .json({ message: "Le livre n'est pas disponible.", data: null });
-
-    // Créer Emprunt
+    const startDate = new Date();
     const emprunt = {
-      livreId: new ObjectId(livreId),
-      clientId: new ObjectId(clientId),
-      startDate: new Date(),
+      livreID: id,
+      clientID,
+      startDate,
       returnDate: null,
       status: "en cours",
     };
 
-    // Enregistrer Emprunt dans DB
-    const result = await db.collection("Emprunts").insertOne(emprunt);
+    await db.collection("Emprunts").insertOne(emprunt);
 
-    // Update livre disponibilité
-    await db
-      .collection("Livres")
-      .updateOne(
-        { _id: new ObjectId(livreId) },
-        { $set: { disponible: false } }
-      );
+    // Send notification
+    await axios.post("http://localhost:5005/notifications/", {
+      clientID: clientID,
+      message: `Vous avez emprunté un livre avec succès!`,
+    });
 
-    res.status(201).json({
-      message: "Emprunt créé avec succès.",
-      data: await db.collection("Emprunts").findOne({ _id: result.insertedId }),
+    return res.status(201).json({
+      message: "Commande créée avec succès!",
+      data: emprunt,
     });
   } catch (error) {
-    console.log("emprunt ~ error:", error.message);
-    return res
-      .status(500)
-      .json({ message: "Imposibel d'emprunter le livre.", data: null });
+    console.error(
+      "Erreur lors du traitement :",
+      error?.response?.data?.message || error.message
+    );
+    return res.status(500).json({ message: "Erreur serveur." });
   }
 });
 
+// Retourner un livre + Send notification (service Notifcation)
 app.post("/emprunts/return/:id", async (req, res) => {
+  const { id } = req.params;
   try {
-    const id = req.params.id;
+    if (!id) {
+      res.send("id dddddddddddd");
+    }
     const db = await dbConnection();
+
+    // Ceck emprunt exist
     const emprunt = await db
       .collection("Emprunts")
       .findOne({ _id: new ObjectId(id) });
 
-    // Vérifier si l'emprunt existe et est en cours
-    if (!emprunt || emprunt.status !== "en cours")
+    if (!emprunt)
       return res
         .status(404)
-        .json({ message: "Emprunt non trouvé ou déjà retourné.", data: null });
+        .json({ message: "Emprunt non trouvé.", data: null });
 
-    // Mettre à jour l'état de l'emprunt à "retourné" et la date de retour
-    const livreId = emprunt.livreId;
+    // Check if the book status == "returned"
+    if (emprunt.status === "returned")
+      return res
+        .status(400)
+        .json({ message: "Le livre a déjà été retourné.", data: null });
+
+    // Set the returnDate
+    const returnDate = new Date();
+
+    // Update Emprunt in DB
     await db
       .collection("Emprunts")
       .updateOne(
         { _id: new ObjectId(id) },
-        { $set: { status: "retourné", returnDate: new Date() } }
+        { $set: { returnDate, status: "returned" } }
       );
 
-    // Mettre à jour l'état du livre à "disponible" dans la collection "Livres"
-    await db
-      .collection("Livres")
-      .updateOne(
-        { _id: new ObjectId(livreId) },
-        { $set: { disponible: true } }
-      );
+    // Update the book's quantity (add 1)
+    const livreResponse = await axios.get(
+      `http://localhost:5002/livres/${emprunt.livreID}`
+    );
+    await axios.put(`http://localhost:5002/livres/${emprunt.livreID}`, {
+      quantite: livreResponse.data.data.quantite + 1,
+    });
 
+    // Send notification to the client
+    await axios.post("http://localhost:5005/notifications/", {
+      clientID: emprunt.clientID,
+      message: `Vous avez retourné le livre avec succès!`,
+    });
+
+    // Return success response
     return res.status(200).json({
-      message: "Livre retourné avec succès.",
-      data: await db.collection("Emprunts").findOne({ _id: new ObjectId(id) }),
+      message: "Livre retourné avec succès!",
+      data: { ...emprunt, returnDate, status: "returned" },
     });
   } catch (error) {
-    console.log("returnEmprunt ~ error:", error);
-    return res.status(500).json({ message: "Invalid Operation.", data: null });
+    console.error("Erreur lors du traitement :", error.message);
+    return res
+      .status(500)
+      .json({ message: "Erreur serveur.", error: error.message });
+  }
+});
+
+// Delete emprunt by id
+app.delete("/emprunts/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = await dbConnection();
+    const result = await db
+      .collection("Emprunts")
+      .deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0)
+      return res.status(404).json({ message: "Invalid Emprunt ID!" });
+
+    return res.status(200).json({ message: `Emprunt est bien supprimer` });
+  } catch (error) {
+    return res.status(500).json({ message: "Serveur erreur !", error });
   }
 });
 
