@@ -3,8 +3,7 @@
 
 /node_modules
 
+readmeComplet.md
+
 .env
 .gitignore
-
-readmeComplet.md
-readme.md

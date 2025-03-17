@@ -3,161 +3,25 @@
 ## Navigation
 
 - [Envirement Variables](#envirement-variables)
-- [Authentification](#authentification)
-  - [1 - Register a User](#1---register-a-user)
-  - [2 - Login User](#2---login-user)
-  - [3 - Logout User](#3---logout-user)
 - [Services](#services)
   - [1 - Service de Gestion des Livres](#1---service-de-gestion-des-livres)
   - [2 - Service de Gestion des Emprunts](#2---service-de-gestion-des-emprunts)
   - [3 - Service de Gestion des Clients](#3---service-de-gestion-des-clients)
+  - [4 - Service de Gestion des Notifications](#4---service-de-gestion-des-notifications)
 
 ## Envirement Variables
 
 ```.env
-PORT = 5000
+LIVRES_PORT = 5002
+CLINETS_PORT = 5003
+EMPRUNTS_PORT = 5004
+NOTIFICATIONS_PORT = 5005
 
 # DB Configuration
-
 MONGODB_URI = mongodb://localhost:27017/ # ou votre URI MongoDB
 DB_NAME = gestion-bibliotheque
 
-# JWT Configuration
-
-JWT_SECRET = "your_jwt_secret_key"
-JWT_EXPIRES_IN = "1d"
 ```
-
-## Authentification
-
-> Manages user authentication in the application.
-> Includes routes for user registration, login, and logout.
-
-### 1 - Register a User
-
-- **description:** Registers a new user in the system and provides a JWT token for future requests.
-
-- **Method:** _`POST`_
-
-- **Root:** .../auth/register
-
-- **Request Body:**
-
-  ```json
-  {
-    "username": "exampleUsername",
-    "email": "example@example.com",
-    "password": "securePassword",
-    "confirmPassword": "securePassword"
-  }
-  ```
-
-- **Response:**
-
-  - **201 Created:**
-
-    ```json
-    {
-      "message": "User registered successfully.",
-      "data": "USER_INFOS",
-      "token": "JWT_TOKEN"
-    }
-    ```
-
-  - **400 Bad Request:**
-
-    ```json
-    { "message": "MESSAGE_WHILE_PROCESS", "data": null }
-    ```
-
-  - **500 Internal Server Error:**
-
-    ```json
-    { "message": "Internal server error", "data": null }
-    ```
-
-### 2 - Login User
-
-- **Description:** Authenticates a user and provides a JWT token for future requests.
-
-- **Method:** _`POST`_
-
-- **Root:** .../auth/login
-
-- **Request Body:**
-
-  ```json
-  {
-    "email": "example@example.com",
-    "password": "securePassword"
-  }
-  ```
-
-- **Response:**
-
-  - **201 Created:**
-
-    ```json
-    {
-      "message": "Login successful.",
-      "data": "USER_INFOS",
-      "token": "JWT_TOKEN"
-    }
-    ```
-
-  - **400 Bad Request:**
-
-    ```json
-    { "message": "MESSAGE_WHILE_PROCESS", "data": null }
-    ```
-
-  - **500 Internal Server Error:**
-
-    ```json
-    { "message": "Internal server error", "data": null }
-    ```
-
-### 3 - Logout User
-
-- **Description:** Ends the user's session by invalidating the authentication token.
-
-- **Method:** _`POST`_
-
-- **Root:** .../auth/logout
-
-- **Request Body:** _(No body required)_
-
-- **Headers Required:**
-
-  - **Authorization:** `Bearer <jwt-token>`
-
-    ```js
-    // JS Example
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-    ```
-
-- **Response:**
-
-  - **200 OK:**
-
-    ```json
-    { "message": "Logout successful.", "data": null }
-    ```
-
-  - **401 Unauthorized:**
-
-    ```json
-    { "error": "Unauthorized. Token missing or invalid.", "data": null }
-    ```
-
-  - **500 Internal Server Error:**
-
-    ```json
-    { "message": "Internal server error", "data": null }
-    ```
 
 ## Services
 
@@ -165,7 +29,7 @@ JWT_EXPIRES_IN = "1d"
 
 - **Responsabilité** :
 
-  - Gérer les informations sur les livres disponibles dans la librairie.
+  - Gérer les informations sur les livres disponibles dans la bibliotique.
 
 - **Fonctionnalités** :
 
@@ -181,6 +45,8 @@ JWT_EXPIRES_IN = "1d"
 
   - Une base de données pour les informations sur les livres (isbn, titre, auteur, categorie, annee_publication, editeur, langue, description, tags, disponible).
 
+---
+
 ### 2 - **Service de Gestion des Emprunts**
 
 - **Responsabilité** :
@@ -191,15 +57,16 @@ JWT_EXPIRES_IN = "1d"
 
   - Créer, mettre à jour la disponibilité et la retourne des emprunts.
 
-  - **Canal de communication** :
+- **Canal de communication** :
 
-- API REST.
-
+  - API REST.
   - Messages asynchrones pour notifier d’autres services (service de notification).
 
 - **Base de données** :
 
   - Une base de données pour les enregistrements des emprunts (clientId, livreId, startDate, returnDate, status).
+
+---
 
 ### 3 - **Service de Gestion des Clients**
 
@@ -220,4 +87,30 @@ JWT_EXPIRES_IN = "1d"
 
   - Une base de données pour les profils des clients (username, email, password (Hash Password), historique des emprunts).
 
-### 4 -
+---
+
+### 4 - **Service de Gestion des Notifications**
+
+- **Responsabilité** :
+
+  - Gérer les notifications envoyées aux clients pour les informer des événements liés à leurs emprunts, et autres activités dans la bibliothèque.
+
+- **Fonctionnalités** :
+
+  - Envoyer des notifications aux clients (par exemple, rappel de retour de livre, confirmation d’emprunt, etc.).
+
+  - Marquer les notifications comme lues ou non lues.
+
+  - Consulter les notifications pour un client spécifique (toutes les notifications ou filtrées par état : lues/non lues).
+
+  - Supprimer des notifications.
+
+- **Canal de communication** :
+
+  - API REST pour recevoir des demandes de notifications des autres services (par exemple, le service des emprunts).
+
+- **Base de données** :
+
+  - Une base de données pour stocker les notifications (\_id, clientID, message, read (booléen), createdAt).
+
+---
